@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #define STUDENT_USERNAME "Student"
 #define STUDENT_PASSWORD "Student"
@@ -33,6 +34,36 @@ void updateStudentInfo();
 void sortStudentsByRoll();
 int isQueueEmpty();
 int isQueueFull();
+
+void libraryModule();
+void displayBookInfo();
+void listBooksByAuthor();
+void displayBookCount();
+void borrowBook();
+void returnBook();
+void buyBook();
+
+#define MAX_BOOK_STACK 100
+#define MAX_TITLE_LENGTH 100
+#define MAX_AUTHOR_LENGTH 50
+
+typedef struct
+{
+    int id;
+    char title[MAX_TITLE_LENGTH];
+    char author[MAX_AUTHOR_LENGTH];
+    int available;
+    char borrower[50];
+} Book;
+
+Book bookStack[MAX_BOOK_STACK];
+int bookStackTop = -1;
+
+void initializeBookStack();
+int isBookStackEmpty();
+int isBookStackFull();
+void pushToBookStack(Book book);
+Book popFromBookStack();
 
 #define MAX_QUEUE_SIZE 100
 Student studentQueue[MAX_QUEUE_SIZE];
@@ -384,10 +415,376 @@ void studentModule()
         switch (choice)
         {
         case 1:
-            printf("Library Module\n");
+            libraryModule();
             break;
         default:
             printf("Invalid choice!\n");
         }
     } while (choice != 3);
+}
+
+void libraryModule()
+{
+    initializeBookStack();
+    int choice;
+    do
+    {
+        printf("\nWelcome  to \nLibrary Management System \n");
+        printf("1. Display All Book Information\n");
+        printf("2. List All Books by a Given Author\n");
+        printf("3. List the Count of Books in the Library\n");
+        printf("4. Borrow a Book\n");
+        printf("5. Return a Book\n");
+        printf("6. Buy a Book\n");
+        printf("7. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        flushInputBuffer();
+
+        switch (choice)
+        {
+        case 1:
+            displayBookInfo();
+            break;
+        case 2:
+            listBooksByAuthor();
+            break;
+        case 3:
+            displayBookCount();
+            break;
+        case 4:
+            borrowBook();
+            break;
+        case 5:
+            returnBook();
+            break;
+        case 6:
+            buyBook();
+            break;
+        case 7:
+            printf("Exiting Library Module...\n");
+            break;
+        default:
+            printf("Invalid choice! Please try again.\n");
+        }
+    } while (choice != 7);
+}
+
+void initializeBookStack()
+{
+    Book initialBooks[] = {
+        {1, "The C Programming Language", "Dennis Ritchie", 1, ""},
+        {2, "Data Structures in C", "Robert Sedgewick", 1, ""},
+        {3, "Clean Code", "Robert Martin", 1, ""},
+        {4, "Introduction to Algorithms", "Thomas Cormen", 1, ""},
+        {5, "Design Patterns", "Erich Gamma", 1, ""}};
+
+    for (int i = 0; i < 5; i++)
+    {
+        pushToBookStack(initialBooks[i]);
+    }
+}
+
+int isBookStackEmpty()
+{
+    return bookStackTop == -1;
+}
+
+int isBookStackFull()
+{
+    return bookStackTop == MAX_BOOK_STACK - 1;
+}
+
+void pushToBookStack(Book book)
+{
+    if (!isBookStackFull())
+    {
+        bookStack[++bookStackTop] = book;
+    }
+}
+
+Book popFromBookStack()
+{
+    Book emptyBook = {0, "", "", 0, ""};
+    if (!isBookStackEmpty())
+    {
+        return bookStack[bookStackTop--];
+    }
+    return emptyBook;
+}
+
+void displayBookInfo()
+{
+    if (isBookStackEmpty())
+    {
+        printf("No books in library!\n");
+        return;
+    }
+
+    printf("\n--- Book Information ---\n");
+    for (int i = 0; i <= bookStackTop; i++)
+    {
+
+        printf("Book ID: %d\n", bookStack[i].id);
+        printf("Title: %s\n", bookStack[i].title);
+        printf("Author: %s\n", bookStack[i].author);
+        printf("Status: %s\n", bookStack[i].available ? "Available" : "Borrowed");
+        if (!bookStack[i].available)
+        {
+            printf("Borrowed or Purchased by: %s\n", bookStack[i].borrower);
+        }
+        printf("------------------------\n");
+    }
+}
+
+void listBooksByAuthor()
+{
+    if (isBookStackEmpty())
+    {
+        printf("No books in library!\n");
+        return;
+    }
+
+    char author[MAX_AUTHOR_LENGTH];
+    int found = 0;
+
+    printf("Enter Author Name: ");
+    fgets(author, MAX_AUTHOR_LENGTH, stdin);
+    author[strcspn(author, "\n")] = '\0';
+
+    printf("\nBooks by %s:\n", author);
+    for (int i = 0; i <= bookStackTop; i++)
+    {
+        if (strcasecmp(bookStack[i].author, author) == 0)
+        {
+            printf("Book ID: %d. %s (%s)\n", bookStack[i].id, bookStack[i].title,
+                   bookStack[i].available ? "Available" : "Borrowed");
+            found++;
+        }
+    }
+    if (!found)
+    {
+        printf("No books found by this author.\n");
+    }
+}
+
+void displayBookCount()
+{
+    if (isBookStackEmpty())
+    {
+        printf("No books in library!\n");
+        return;
+    }
+
+    Book tempStack[MAX_BOOK_STACK];
+    int tempTop = -1;
+    int availableInStack = 0;
+    int borrowedFromStack = 0;
+
+    while (!isBookStackEmpty())
+    {
+        Book currentBook = popFromBookStack();
+        if (currentBook.available)
+        {
+            availableInStack++;
+        }
+        else
+        {
+            borrowedFromStack++;
+        }
+        tempStack[++tempTop] = currentBook;
+    }
+
+    // Restore books to original stack
+    while (tempTop >= 0)
+    {
+        pushToBookStack(tempStack[tempTop--]);
+    }
+
+    printf("\nLibrary Stack Statistics:\n");
+    printf("Total Books in Stack: %d\n", availableInStack + borrowedFromStack);
+    printf("Available Books in Stack: %d\n", availableInStack);
+    printf("Borrowed Books from Stack: %d\n", borrowedFromStack);
+}
+
+void borrowBook()
+{
+    if (isBookStackEmpty())
+    {
+        printf("No books in library!\n");
+        return;
+    }
+
+    int bookId;
+    printf("Enter Book ID to borrow: ");
+    scanf("%d", &bookId);
+    flushInputBuffer();
+
+    for (int i = 0; i <= bookStackTop; i++)
+    {
+        if (bookStack[i].id == bookId)
+        {
+            if (bookStack[i].available)
+            {
+                printf("Enter your name: ");
+                fgets(bookStack[i].borrower, 50, stdin);
+                bookStack[i].borrower[strcspn(bookStack[i].borrower, "\n")] = '\0';
+
+                bookStack[i].available = 0;
+                printf("Book borrowed successfully from stack!\n");
+            }
+            else
+            {
+                printf("Book is already borrowed by %s\n", bookStack[i].borrower);
+            }
+            return;
+        }
+    }
+    printf("Book not found in stack!\n");
+}
+
+void returnBook()
+{
+    if (isBookStackEmpty())
+    {
+        printf("No books in library!\n");
+        return;
+    }
+
+    int bookId;
+    printf("Enter Book ID to return to stack: ");
+    scanf("%d", &bookId);
+    flushInputBuffer();
+
+    for (int i = 0; i <= bookStackTop; i++)
+    {
+        if (bookStack[i].id == bookId)
+        {
+            if (!bookStack[i].available)
+            {
+                bookStack[i].available = 1;
+                strcpy(bookStack[i].borrower, "");
+                printf("Book returned successfully to stack!\n");
+            }
+            else
+            {
+                printf("This book is not borrowed!\n");
+                printf("Do you want to give this book to library? (y/n): ");
+                char choice;
+                scanf("%c", &choice);
+                flushInputBuffer();
+
+                if (choice == 'y' || choice == 'Y')
+                {
+                    Book newBook;
+                    newBook.id = bookStackTop + 2; // New ID will be last ID + 1
+                    printf("Enter Book Title: ");
+                    fgets(newBook.title, MAX_TITLE_LENGTH, stdin);
+                    newBook.title[strcspn(newBook.title, "\n")] = '\0';
+
+                    printf("Enter Book Author: ");
+                    fgets(newBook.author, MAX_AUTHOR_LENGTH, stdin);
+                    newBook.author[strcspn(newBook.author, "\n")] = '\0';
+
+                    newBook.available = 1;
+                    strcpy(newBook.borrower, "");
+
+                    pushToBookStack(newBook);
+                    printf("Book added to library successfully!\n");
+                }
+            }
+            return;
+        }
+    }
+
+    // If book not found, ask if they want to add a new book
+    printf("Book not found in library!\n");
+    printf("Do you want to give this book to library? (y/n): ");
+    char choice;
+    scanf("%c", &choice);
+    flushInputBuffer();
+
+    if (choice == 'y' || choice == 'Y')
+    {
+        Book newBook;
+        newBook.id = bookStackTop + 2; // New ID will be last ID + 1
+        printf("Enter Book Title: ");
+        fgets(newBook.title, MAX_TITLE_LENGTH, stdin);
+        newBook.title[strcspn(newBook.title, "\n")] = '\0';
+
+        printf("Enter Book Author: ");
+        fgets(newBook.author, MAX_AUTHOR_LENGTH, stdin);
+        newBook.author[strcspn(newBook.author, "\n")] = '\0';
+
+        newBook.available = 1;
+        strcpy(newBook.borrower, "");
+
+        pushToBookStack(newBook);
+        printf("Book added to library successfully!\n");
+    }
+}
+
+void buyBook()
+{
+    if (isBookStackEmpty())
+    {
+        printf("No books available to buy!\n");
+        return;
+    }
+
+    printf("\nAvailable books to buy:\n");
+    Book tempStack[MAX_BOOK_STACK];
+    int tempTop = -1;
+
+    while (!isBookStackEmpty())
+    {
+        Book currentBook = popFromBookStack();
+        if (currentBook.available)
+        {
+            printf("ID: %d, Title: %s, Author: %s\n",
+                   currentBook.id, currentBook.title, currentBook.author);
+        }
+        tempStack[++tempTop] = currentBook;
+    }
+
+    // Restore books to original stack
+    while (tempTop >= 0)
+    {
+        pushToBookStack(tempStack[tempTop--]);
+    }
+
+    int bookId;
+    printf("\nEnter Book ID to buy: ");
+    scanf("%d", &bookId);
+    flushInputBuffer();
+
+    tempTop = -1;
+    int found = 0;
+
+    while (!isBookStackEmpty())
+    {
+        Book currentBook = popFromBookStack();
+        if (currentBook.id == bookId && currentBook.available)
+        {
+            printf("Enter your name: ");
+            fgets(currentBook.borrower, 50, stdin);
+            currentBook.borrower[strcspn(currentBook.borrower, "\n")] = '\0';
+            currentBook.available = 0;
+            printf("Book '%s' has been purchased successfully by %s!\n",
+                   currentBook.title, currentBook.borrower);
+            found = 1;
+        }
+        tempStack[++tempTop] = currentBook;
+    }
+
+    // Restore all books to original stack
+    while (tempTop >= 0)
+    {
+        pushToBookStack(tempStack[tempTop--]);
+    }
+
+    if (!found)
+    {
+        printf("Book not found or not available for purchase!\n");
+    }
 }
