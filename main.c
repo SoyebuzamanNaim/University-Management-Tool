@@ -35,6 +35,10 @@ void sortStudentsByRoll();
 int isQueueEmpty();
 int isQueueFull();
 
+#define MAX_QUEUE_SIZE 100
+Student studentQueue[MAX_QUEUE_SIZE];
+int queueFront = -1, queueRear = -1, queueSize = 0;
+
 void libraryModule();
 void displayBookInfo();
 void listBooksByAuthor();
@@ -65,9 +69,42 @@ int isBookStackFull();
 void pushToBookStack(Book book);
 Book popFromBookStack();
 
-#define MAX_QUEUE_SIZE 100
-Student studentQueue[MAX_QUEUE_SIZE];
-int queueFront = -1, queueRear = -1, queueSize = 0;
+void quizModule();
+void dmQuiz();
+void dsQuiz();
+void addQuestion(const char *questionText, const char options[4][100], int correctOption);
+void freeQuestions();
+void initializeDM();
+
+typedef struct dmQn
+{
+    char question[200];
+    char options[4][100];
+    int correctOption;
+    struct dmQn *next;
+} dmQn;
+
+dmQn *head = NULL;
+
+
+
+void addQuestion(const char *questionText, const char options[4][100], int correctOption);
+void freeQuestions();
+
+typedef struct dsQn
+{
+    char question[200];
+    char options[4][100];
+    int correctOption;
+    struct dsQn *prev;
+    struct dsQn *next;
+} dsQn;
+dsQn *dsHead = NULL, *dsTail = NULL;
+void addDSQuestion(const char *questionText, const char options[4][100], int correctOption);
+void freeDSQuestions();
+void initializeDS();
+
+
 
 int main()
 {
@@ -417,6 +454,9 @@ void studentModule()
         case 1:
             libraryModule();
             break;
+        case 2:
+            quizModule();
+            break;
         default:
             printf("Invalid choice!\n");
         }
@@ -434,7 +474,7 @@ void libraryModule()
         printf("2. List All Books by a Given Author\n");
         printf("3. List the Count of Books in the Library\n");
         printf("4. Borrow a Book\n");
-        printf("5. Return a Book\n");
+        printf("5. Return a Book/Donate a Book\n");
         printf("6. Buy a Book\n");
         printf("7. Exit\n");
         printf("Enter your choice: ");
@@ -595,7 +635,6 @@ void displayBookCount()
         tempStack[++tempTop] = currentBook;
     }
 
-    // Restore books to original stack
     while (tempTop >= 0)
     {
         pushToBookStack(tempStack[tempTop--]);
@@ -652,7 +691,7 @@ void returnBook()
     }
 
     int bookId;
-    printf("Enter Book ID to return to stack: ");
+    printf("Enter Book ID to return to stack/Enter '-1' to donate: ");
     scanf("%d", &bookId);
     flushInputBuffer();
 
@@ -677,7 +716,7 @@ void returnBook()
                 if (choice == 'y' || choice == 'Y')
                 {
                     Book newBook;
-                    newBook.id = bookStackTop + 2; // New ID will be last ID + 1
+                    newBook.id = bookStackTop + 2;
                     printf("Enter Book Title: ");
                     fgets(newBook.title, MAX_TITLE_LENGTH, stdin);
                     newBook.title[strcspn(newBook.title, "\n")] = '\0';
@@ -697,7 +736,6 @@ void returnBook()
         }
     }
 
-    // If book not found, ask if they want to add a new book
     printf("Book not found in library!\n");
     printf("Do you want to give this book to library? (y/n): ");
     char choice;
@@ -707,7 +745,7 @@ void returnBook()
     if (choice == 'y' || choice == 'Y')
     {
         Book newBook;
-        newBook.id = bookStackTop + 2; // New ID will be last ID + 1
+        newBook.id = bookStackTop + 2;
         printf("Enter Book Title: ");
         fgets(newBook.title, MAX_TITLE_LENGTH, stdin);
         newBook.title[strcspn(newBook.title, "\n")] = '\0';
@@ -747,7 +785,6 @@ void buyBook()
         tempStack[++tempTop] = currentBook;
     }
 
-    // Restore books to original stack
     while (tempTop >= 0)
     {
         pushToBookStack(tempStack[tempTop--]);
@@ -777,7 +814,6 @@ void buyBook()
         tempStack[++tempTop] = currentBook;
     }
 
-    // Restore all books to original stack
     while (tempTop >= 0)
     {
         pushToBookStack(tempStack[tempTop--]);
@@ -788,3 +824,229 @@ void buyBook()
         printf("Book not found or not available for purchase!\n");
     }
 }
+
+void quizModule()
+{
+    int choice;
+    do
+    {
+        printf("\nQuiz Module\n");
+
+        printf("1. Start Quiz in Discrete Mathmemtic\n");
+        printf("2. Start Quiz in Data Structure\n");
+        printf("3. Exit\n");
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+        flushInputBuffer();
+
+        switch (choice)
+        {
+        case 1:
+            dmQuiz();
+            break;
+        case 2:
+            dsQuiz();
+            break;
+        default:
+            printf("Invalid choice!\n");
+        }
+    } while (choice != 3);
+}
+
+void dmQuiz()
+{
+    initializeDM();
+    int score = 0;
+    int answer;
+    dmQn *current = head;
+
+    if (current == NULL)
+    {
+        printf("No questions available for the quiz.\n");
+        return; // Exit the function if there are no questions
+    }
+
+    printf("\n--- Discrete Mathematics Quiz ---\n");
+
+    int questionCount = 0;                       // Counter for the number of questions asked
+    while (current != NULL && questionCount < 5) // Limit to 5 questions
+    {
+        printf("%s\n", current->question);
+        for (int i = 0; i < 4; i++)
+        {
+            printf("%d. %s\n", i + 1, current->options[i]);
+        }
+        printf("Enter your answer (1-4): ");
+        scanf("%d", &answer);
+
+        // Input validation
+        if (answer < 1 || answer > 4)
+        {
+            printf("Invalid input. Please enter a number between 1 and 4.\n");
+            continue; // Skip to the next iteration
+        }
+
+        if (answer - 1 == current->correctOption)
+        {
+            score++;
+            printf("Correct!\n"); // Feedback for correct answer
+        }
+        else
+        {
+            printf("Incorrect. The correct answer was %d.\n", current->correctOption + 1); // Feedback for incorrect answer
+        }
+
+        current = current->next;
+        questionCount++; // Increment the question count
+    }
+
+    printf("Your total score: %d out of %d\n", score, questionCount);
+    freeQuestions();
+}
+
+void dsQuiz()
+{
+    initializeDS();
+    int score = 0;
+    int answer;
+    dsQn *current = dsHead;
+
+    if (current == NULL)
+    {
+        printf("No questions available for the quiz.\n");
+        return; // Exit the function if there are no questions
+    }
+
+    printf("\n--- Data Structures Quiz ---\n");
+
+    int questionCount = 0;                       // Counter for the number of questions asked
+    while (current != NULL && questionCount < 5) // Limit to 5 questions
+    {
+        printf("%s\n", current->question);
+        for (int i = 0; i < 4; i++)
+        {
+            printf("%d. %s\n", i + 1, current->options[i]);
+        }
+        printf("Enter your answer (1-4): ");
+        scanf("%d", &answer);
+
+        // Input validation
+        if (answer < 1 || answer > 4)
+        {
+            printf("Invalid input. Please enter a number between 1 and 4.\n");
+            continue; // Skip to the next iteration
+        }
+
+        if (answer - 1 == current->correctOption)
+        {
+            score++;
+            printf("Correct!\n"); // Feedback for correct answer
+        }
+        else
+        {
+            printf("Incorrect. The correct answer was %d.\n", current->correctOption + 1); // Feedback for incorrect answer
+        }
+
+        current = current->next;
+        questionCount++; // Increment the question count
+    }
+
+    printf("Your total score: %d out of %d\n", score, questionCount);
+    freeDSQuestions();
+}
+
+void addQuestion(const char *questionText, const char options[4][100], int correctOption)
+{
+    dmQn *newQuestion = (dmQn *)malloc(sizeof(dmQn));
+    strcpy(newQuestion->question, questionText);
+    for (int i = 0; i < 4; i++)
+    {
+        strcpy(newQuestion->options[i], options[i]);
+    }
+    newQuestion->correctOption = correctOption;
+    newQuestion->next = head;
+    head = newQuestion;
+}
+
+void freeQuestions()
+{
+    dmQn *current = head;
+    while (current != NULL)
+    {
+        dmQn *temp = current;
+        current = current->next;
+        free(temp);
+    }
+}
+
+void initializeDM()
+{
+    char options1[4][100] = {"A set with no elements", "A set with one element", "A set with infinite elements", "A set with undefined elements"};
+    addQuestion("What is an empty set?", options1, 0);
+
+    char options2[4][100] = {"Union", "Intersection", "Difference", "Complement"};
+    addQuestion("Which operation finds common elements in two sets?", options2, 1);
+
+    char options3[4][100] = {"Subset", "Power set", "Proper subset", "Superset"};
+    addQuestion("What is a set containing all subsets of a given set?", options3, 1);
+
+    char options4[4][100] = {"P implies Q", "P and Q", "P or Q", "Not P"};
+    addQuestion("In logic, what does 'P ^ Q' represent?", options4, 1);
+
+    char options5[4][100] = {"3", "5", "7", "9"};
+    addQuestion("How many edges does a complete graph with 4 vertices have?", options5, 1);
+}
+void addDSQuestion(const char *questionText, const char options[4][100], int correctOption)
+{
+    dsQn *newQuestion = (dsQn *)malloc(sizeof(dsQn));
+    strcpy(newQuestion->question, questionText);
+    for (int i = 0; i < 4; i++)
+    {
+        strcpy(newQuestion->options[i], options[i]);
+    }
+    newQuestion->correctOption = correctOption;
+    newQuestion->next = NULL;
+    newQuestion->prev = dsTail;
+    
+    if (dsTail != NULL)
+    {
+        dsTail->next = newQuestion;
+    }
+    else
+    {
+        dsHead = newQuestion;
+    }
+    dsTail = newQuestion;
+}
+
+void freeDSQuestions()
+{
+    dsQn *current = dsHead;
+    while (current != NULL)
+    {
+        dsQn *temp = current;
+        current = current->next;
+        free(temp);
+    }
+    dsHead = dsTail = NULL;
+}
+
+void initializeDS()
+{
+    char options1[4][100] = {"Array", "Linked List", "Stack", "Queue"};
+    addDSQuestion("Which data structure uses LIFO principle?", options1, 2);
+    
+    char options2[4][100] = {"O(1)", "O(log n)", "O(n)", "O(n^2)"};
+    addDSQuestion("What is the time complexity of searching in a balanced BST?", options2, 1);
+    
+    char options3[4][100] = {"Breadth-first search", "Depth-first search", "Linear search", "Binary search"};
+    addDSQuestion("Which algorithm is used for traversing a tree level by level?", options3, 0);
+    
+    char options4[4][100] = {"A stack", "A queue", "A linked list", "A heap"};
+    addDSQuestion("Which data structure is used in recursion?", options4, 0);
+    
+    char options5[4][100] = {"Insertion sort", "Selection sort", "Merge sort", "Bubble sort"};
+    addDSQuestion("Which sorting algorithm has the best worst-case time complexity?", options5, 2);
+}
+
+
