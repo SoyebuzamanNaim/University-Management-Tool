@@ -121,12 +121,12 @@ int main()
         switch (choice)
         {
         case 1:
-            if (teacherLogin() || 1)
+            if (teacherLogin())
                 teacherModule();
 
             break;
         case 2:
-            if (studentLogin() || 1)
+            if (studentLogin())
                 studentModule();
 
             break;
