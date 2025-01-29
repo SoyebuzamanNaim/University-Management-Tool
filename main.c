@@ -86,8 +86,6 @@ typedef struct dmQn
 
 dmQn *head = NULL;
 
-
-
 void addQuestion(const char *questionText, const char options[4][100], int correctOption);
 void freeQuestions();
 
@@ -103,8 +101,7 @@ dsQn *dsHead = NULL, *dsTail = NULL;
 void addDSQuestion(const char *questionText, const char options[4][100], int correctOption);
 void freeDSQuestions();
 void initializeDS();
-
-
+void tuitionFeesCalculator();
 
 int main()
 {
@@ -456,6 +453,9 @@ void studentModule()
             break;
         case 2:
             quizModule();
+            break;
+        case 3:
+            tuitionFeesCalculator();
             break;
         default:
             printf("Invalid choice!\n");
@@ -863,13 +863,13 @@ void dmQuiz()
     if (current == NULL)
     {
         printf("No questions available for the quiz.\n");
-        return; // Exit the function if there are no questions
+        return;
     }
 
     printf("\n--- Discrete Mathematics Quiz ---\n");
 
-    int questionCount = 0;                       // Counter for the number of questions asked
-    while (current != NULL && questionCount < 5) // Limit to 5 questions
+    int questionCount = 0;
+    while (current != NULL && questionCount < 5)
     {
         printf("%s\n", current->question);
         for (int i = 0; i < 4; i++)
@@ -879,25 +879,24 @@ void dmQuiz()
         printf("Enter your answer (1-4): ");
         scanf("%d", &answer);
 
-        // Input validation
         if (answer < 1 || answer > 4)
         {
             printf("Invalid input. Please enter a number between 1 and 4.\n");
-            continue; // Skip to the next iteration
+            continue;
         }
 
         if (answer - 1 == current->correctOption)
         {
             score++;
-            printf("Correct!\n"); // Feedback for correct answer
+            printf("Correct!\n");
         }
         else
         {
-            printf("Incorrect. The correct answer was %d.\n", current->correctOption + 1); // Feedback for incorrect answer
+            printf("Incorrect. The correct answer was %d.\n", current->correctOption + 1);
         }
 
         current = current->next;
-        questionCount++; // Increment the question count
+        questionCount++;
     }
 
     printf("Your total score: %d out of %d\n", score, questionCount);
@@ -914,13 +913,13 @@ void dsQuiz()
     if (current == NULL)
     {
         printf("No questions available for the quiz.\n");
-        return; // Exit the function if there are no questions
+        return;
     }
 
     printf("\n--- Data Structures Quiz ---\n");
 
-    int questionCount = 0;                       // Counter for the number of questions asked
-    while (current != NULL && questionCount < 5) // Limit to 5 questions
+    int questionCount = 0;
+    while (current != NULL && questionCount < 5)
     {
         printf("%s\n", current->question);
         for (int i = 0; i < 4; i++)
@@ -930,25 +929,24 @@ void dsQuiz()
         printf("Enter your answer (1-4): ");
         scanf("%d", &answer);
 
-        // Input validation
         if (answer < 1 || answer > 4)
         {
             printf("Invalid input. Please enter a number between 1 and 4.\n");
-            continue; // Skip to the next iteration
+            continue;
         }
 
         if (answer - 1 == current->correctOption)
         {
             score++;
-            printf("Correct!\n"); // Feedback for correct answer
+            printf("Correct!\n");
         }
         else
         {
-            printf("Incorrect. The correct answer was %d.\n", current->correctOption + 1); // Feedback for incorrect answer
+            printf("Incorrect. The correct answer was %d.\n", current->correctOption + 1);
         }
 
         current = current->next;
-        questionCount++; // Increment the question count
+        questionCount++;
     }
 
     printf("Your total score: %d out of %d\n", score, questionCount);
@@ -1007,7 +1005,7 @@ void addDSQuestion(const char *questionText, const char options[4][100], int cor
     newQuestion->correctOption = correctOption;
     newQuestion->next = NULL;
     newQuestion->prev = dsTail;
-    
+
     if (dsTail != NULL)
     {
         dsTail->next = newQuestion;
@@ -1035,18 +1033,67 @@ void initializeDS()
 {
     char options1[4][100] = {"Array", "Linked List", "Stack", "Queue"};
     addDSQuestion("Which data structure uses LIFO principle?", options1, 2);
-    
+
     char options2[4][100] = {"O(1)", "O(log n)", "O(n)", "O(n^2)"};
     addDSQuestion("What is the time complexity of searching in a balanced BST?", options2, 1);
-    
+
     char options3[4][100] = {"Breadth-first search", "Depth-first search", "Linear search", "Binary search"};
     addDSQuestion("Which algorithm is used for traversing a tree level by level?", options3, 0);
-    
+
     char options4[4][100] = {"A stack", "A queue", "A linked list", "A heap"};
     addDSQuestion("Which data structure is used in recursion?", options4, 0);
-    
+
     char options5[4][100] = {"Insertion sort", "Selection sort", "Merge sort", "Bubble sort"};
     addDSQuestion("Which sorting algorithm has the best worst-case time complexity?", options5, 2);
 }
 
+void tuitionFeesCalculator()
+{
+    printf("\n\nWelcome to Tuition Fees Calculator\n");
+    const int perCreditFee = 3850;
+    const int labFee = 2000;
+    const int activityFee = 1500;
 
+    int creditHours, waiverPercentage;
+    printf("Total Credits: ");
+    scanf("%d", &creditHours);
+
+    char hasWaiver;
+    printf("Do you have a waiver? (y/n): ");
+    scanf(" %c", &hasWaiver);
+    if (hasWaiver == 'y' || hasWaiver == 'Y')
+    {
+        printf("Enter Waiver Percentage: ");
+        scanf("%d", &waiverPercentage);
+    }
+    else
+    {
+        waiverPercentage = 0;
+    }
+    double courseFee = perCreditFee * creditHours;
+    double totalSemesterFee = courseFee + labFee + activityFee;
+
+    double firstInstallment = totalSemesterFee * 0.4;
+    double secondInstallment = totalSemesterFee * 0.3;
+    double thirdInstallment = (totalSemesterFee * 0.3) - (courseFee * (waiverPercentage / 100.0));
+
+    if (thirdInstallment < 0)
+    {
+        secondInstallment += thirdInstallment;
+        thirdInstallment = 0;
+    }
+    if (secondInstallment < 0)
+    {
+        firstInstallment += secondInstallment;
+        secondInstallment = 0;
+    }
+
+    double totalPayable = firstInstallment + secondInstallment + thirdInstallment;
+
+    printf("\nTuition Fee Breakdown:\n");
+    printf("Total Semester Fee (Before Waiver): %.2lf BDT\n", totalSemesterFee);
+    printf("Total Payable After Waiver: %.2lf BDT\n", totalPayable);
+    printf("1st Installment: %.2lf BDT\n", firstInstallment);
+    printf("2nd Installment: %.2lf BDT\n", secondInstallment);
+    printf("3rd Installment: %.2lf BDT\n", thirdInstallment);
+}
